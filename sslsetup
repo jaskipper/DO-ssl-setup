@@ -46,7 +46,8 @@ function regdomain {
       DOMAINS_TO_ENCRYPT+=("-d www.${DOMAIN_NAME[$COUNTER]}")
       echo "Adding [www] too..."
     fi
-
+    
+    set -o allexport
     source /root/config.conf
 
     if [ -z "$INSTALL_LOC" ]
