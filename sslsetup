@@ -46,7 +46,8 @@ function regdomain {
       echo "Adding [www] too..."
     fi
 
-    if [ -z "$INSTALL_LOC" ]; then
+    if [ -z "$INSTALL_LOC" ]
+    then
       INSTALL_LOC[$COUNTER]="$INSTALL_LOC"
     else
       INSTALL_LOC[$COUNTER]="/var/www/html"
@@ -55,9 +56,9 @@ function regdomain {
     echo ""
     echo "I need to know where ${DOMAIN_NAME[$COUNTER]} is installed on your server [The file path]."
     echo "The Default location is [${INSTALL_LOC[$COUNTER]}]. Is this where ${DOMAIN_NAME[$COUNTER]} is installed?"
-    echo "Please enter [Y] or [N] and press [ENTER]: "
+    echo ""
 
-    if ask "Is The Domain Installed at [${INSTALL_LOC[$COUNTER]}]?: " Y; then
+    if ask "Please enter [Y] or [N] and press [ENTER]:  " Y; then
       # All is good
       echo "Great! The Domain is Installed at ${INSTALL_LOC[$COUNTER]}"
     else
