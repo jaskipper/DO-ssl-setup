@@ -9,7 +9,7 @@ echo "Enter your name and press [ENTER]: "
 read -p "Name: " USER
 
 echo ""
-echo "Hello $USER. This Script will Help You Set Up SSL Encryption on your Digital Ocean Server. I need to ask you a few questions first before we get started."
+echo "Hello $USER. This Script will Help You Set Up SSL Encryption on your Digital Ocean Droplet. I need to ask you a few questions first before we get started."
 echo "Enter your E-Mail address and press [ENTER]: "
 read -p "E-Mail: " USER_EMAIL
 
