@@ -59,6 +59,7 @@ function regdomain {
 
     if ask "Is The Domain Installed at [${INSTALL_LOC[$COUNTER]}]?: " Y; then
       # All is good
+      echo "Great! The Domain is Installed at ${INSTALL_LOC[$COUNTER]}"
     else
       echo ""
       echo "Please enter the exact install location (ex. /var/www/owncloud, /var/www/churchcrm, /var/www/html) and press [ENTER]: "
