@@ -122,20 +122,23 @@ echo ""
 echo "Great! We're done that part. Now I need to do a few things with the Apache Configuration file, and then we will be ready to contact LetsEncrypt."
 echo ""
 
+COUNTER=0;
+
 for i in ${DOMAIN_NAME[@]}; do
 
-    echo "Working on the Apache Config File for ${DOMAIN_NAME[$i]}..."
+    echo "Working on the Apache Config File for $i..."
 
-    cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
+    cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/$i.conf
 
-    sed -i "s/webmaster@localhost/$USER_EMAIL/g" /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
-    sed -i "s#/var/www/html#$INSTALL_LOC$i#g" /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
-    sed -i "/ServerAdmin/a         ServerName ${DOMAIN_NAME[$i]}" /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
+    sed -i "s/webmaster@localhost/$USER_EMAIL/g" /etc/apache2/sites-available/$i.conf
+    sed -i "s#/var/www/html#I${INSTALL_LOC[$COUNTER]}#g" /etc/apache2/sites-available/$i.conf
+    sed -i "/ServerAdmin/a         ServerName $i" /etc/apache2/sites-available/$i.conf
     if [${DOMAIN_NAME_WWW[$COUNTER]} != ""]; then
-      sed -i "/ServerName/a ServerAlias www.${DOMAIN_NAME[$i]}" /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
+      sed -i "/ServerName/a ServerAlias www.$i" /etc/apache2/sites-available/$i.conf
     fi
 
-    a2ensite $DOMAIN_NAME
+    a2ensite $i
+    let COUNTER=COUNTER+1
 
 done
 
