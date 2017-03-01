@@ -18,28 +18,29 @@ DNUM=(_1 _2 _3 _4 _5 _6)
 DOMAINS_TO_ENCRYPT=()
 
 for i in $DNUM; do
-  THISDOMAIN = DOMAIN_NAME$i;
-  if [$THISDOMAIN != "example.com"] then
+  THISDOMAIN = DOMAIN_NAME$i
+  if [$THISDOMAIN != "example.com"]; then
 
     #Just making sure that they didn't put www before the domain name.
     THISDOMAIN=$(sed 's/www.//g' <<<"$THISDOMAIN")
 
     #Checking to see if the networking for this domain is set up correctly
     echo "Checking $THISDOMAIN connection..."
-    if ping -c 1 $THISDOMAIN &> /dev/null then
+
+    if [ping -c 1 $THISDOMAIN &> /dev/null]; then
       DOMAINS_TO_ENCRYPT+=("-d $THISDOMAIN")
       echo "Connection Successful!"
     else
       echo "WARNING: COULD NOT CONNECT TO $THISDOMAIN"
     fi
 
-    if ping -c 1 "www.$THISDOMAIN" &> /dev/null
-    then
+    if [ping -c 1 "www.$THISDOMAIN" &> /dev/null]; then
       DOMAINS_TO_ENCRYPT+=("-d www.$THISDOMAIN")
       echo "Adding \'www\' too"
     fi
 
     echo "Working on the Apache Config File for $THISDOMAIN..."
+
     cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/$THISDOMAIN.conf
 
     sed -i "s/webmaster@localhost/$USER_EMAIL/g" /etc/apache2/sites-available/$THISDOMAIN.conf
