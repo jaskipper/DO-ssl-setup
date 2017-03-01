@@ -46,16 +46,22 @@ function regdomain {
       echo "Adding [www] too..."
     fi
 
+    if [ -z "$INSTALL_LOC" ]; then
+      INSTALL_LOC[$COUNTER]="$INSTALL_LOC"
+    else
+      INSTALL_LOC[$COUNTER]="/var/www/html"
+    fi
+
     echo ""
     echo "I need to know where ${DOMAIN_NAME[$COUNTER]} is installed on your server [The file path]."
-    echo "The Default location is [/var/www/html]. Is this where ${DOMAIN_NAME[$COUNTER]} is installed?"
+    echo "The Default location is [${INSTALL_LOC[$COUNTER]}]. Is this where ${DOMAIN_NAME[$COUNTER]} is installed?"
     echo "Please enter [Y] or [N] and press [ENTER]: "
 
-    if ask "Is The Domain Installed at \"/var/www/html\"?: " Y; then
-      INSTALL_LOC[$COUNTER]="/var/www/html"
+    if ask "Is The Domain Installed at [${INSTALL_LOC[$COUNTER]}]?: " Y; then
+      # All is good
     else
       echo ""
-      echo "Please enter the exact install location (ex. /var/www/owncloud) and press [ENTER]: "
+      echo "Please enter the exact install location (ex. /var/www/owncloud, /var/www/churchcrm, /var/www/html) and press [ENTER]: "
       read INSTALL_LOC[$COUNTER]
     fi
 
@@ -66,7 +72,7 @@ function regdomain {
   fi
 
   echo ""
-  echo "Do you have any other domains or subdomains that you would like to encrypt?"
+  echo "Do you have any other domains or subdomains that you would like to encrypt at this time?"
   echo "Please enter [Y] or [N] and press [ENTER]: "
 
   let COUNTER=COUNTER+1
