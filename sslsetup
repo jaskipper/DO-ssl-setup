@@ -32,13 +32,15 @@ function regdomain {
   echo ""
   echo "Let me check to make sure that ${DOMAIN_NAME[$COUNTER]} is valid and is working correctly."
 
-  if ping -c 1 ${DOMAIN_NAME[$COUNTER]} &> /dev/null then
+  if ping -c 1 ${DOMAIN_NAME[$COUNTER]} &> /dev/null
+  then
     DOMAINS_TO_ENCRYPT+=("-d ${DOMAIN_NAME[$COUNTER]}")
 
     echo ""
     echo "Great! I was able to Connect Successfuly to ${DOMAIN_NAME[$COUNTER]}!"
 
-    if ping -c 1 "www.${DOMAIN_NAME[$COUNTER]}" &> /dev/null then
+    if ping -c 1 "www.${DOMAIN_NAME[$COUNTER]}" &> /dev/null
+    then
       DOMAIN_NAME_WWW[$COUNTER]="www.${DOMAIN_NAME[$COUNTER]}"
       DOMAINS_TO_ENCRYPT+=("-d www.${DOMAIN_NAME[$COUNTER]}")
       echo "Adding [www] too..."
