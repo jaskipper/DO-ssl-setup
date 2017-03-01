@@ -1,0 +1,40 @@
+#!/bin/bash
+
+echo "#####################################################"
+echo "#                    Setting up SSL                 #"
+echo "#####################################################"
+
+#Getting .env variables
+PWDIR=${PWD##*/}
+set -o allexport
+source ./config.conf
+
+apt --yes update
+echo -e "First let's install the LetsEncrypt Installer"
+apt --yes install python-letsencrypt-apache
+
+DNUM=(_1 _2 _3 _4 _5 _6)
+
+DOMAINS_TO_ENCRYPT=()
+
+for i in $DNUM; do
+  THISDOMAIN = DOMAIN_NAME$i;
+  if [$THISDOMAIN != "example.com"] then
+    if ping -c 1 $THISDOMAIN &> /dev/null then
+      DOMAINS_TO_ENCRYPT+=("-d $THISDOMAIN")
+    else
+      echo "WARNING: COULD NOT CONNECT TO $THISDOMAIN";
+    fi
+
+    if ping -c 1 "www.$THISDOMAIN" &> /dev/null
+    then
+      DOMAINS_TO_ENCRYPT+=("-d www.$THISDOMAIN")
+  fi
+done
+
+letsencrypt --apache ${DOMAINS_TO_ENCRYPT[@]}
+
+echo "30 2 * * 1 /usr/bin/letsencrypt renew >> /var/log/le-renew.log" >> /var/spool/cron/crontabs/root
+chmod 600 /var/spool/cron/crontabs/root
+
+service apache2 reload
