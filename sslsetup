@@ -20,18 +20,42 @@ DOMAINS_TO_ENCRYPT=()
 for i in $DNUM; do
   THISDOMAIN = DOMAIN_NAME$i;
   if [$THISDOMAIN != "example.com"] then
+
+    #Just making sure that they didn't put www before the domain name.
+    THISDOMAIN=$(sed 's/www.//g' <<<"$THISDOMAIN")
+
+    #Checking to see if the networking for this domain is set up correctly
+    echo "Checking $THISDOMAIN connection..."
     if ping -c 1 $THISDOMAIN &> /dev/null then
       DOMAINS_TO_ENCRYPT+=("-d $THISDOMAIN")
+      echo "Connection Successful!"
     else
-      echo "WARNING: COULD NOT CONNECT TO $THISDOMAIN";
+      echo "WARNING: COULD NOT CONNECT TO $THISDOMAIN"
     fi
 
     if ping -c 1 "www.$THISDOMAIN" &> /dev/null
     then
       DOMAINS_TO_ENCRYPT+=("-d www.$THISDOMAIN")
+      echo "Adding \'www\' too"
+    fi
+
+    echo "Working on the Apache Config File for $THISDOMAIN..."
+    cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/$THISDOMAIN.conf
+
+    sed -i "s/webmaster@localhost/$USER_EMAIL/g" /etc/apache2/sites-available/$THISDOMAIN.conf
+    sed -i "s#/var/www/html#$INSTALL_LOC$i#g" /etc/apache2/sites-available/$THISDOMAIN.conf
+    sed -i "/ServerAdmin/a         ServerName $THISDOMAIN" /etc/apache2/sites-available/$THISDOMAIN.conf
+    sed -i "/ServerName/a ServerAlias www.$THISDOMAIN" /etc/apache2/sites-available/$THISDOMAIN.conf
+
+    a2ensite $DOMAIN_NAME
   fi
 done
 
+#Reloading Apache before calling LetsEncrypt
+echo "Reloading Apahce"
+service apache2 reload
+
+echo "Connecting to LetsEncrypt..."
 letsencrypt --apache ${DOMAINS_TO_ENCRYPT[@]}
 
 echo "30 2 * * 1 /usr/bin/letsencrypt renew >> /var/log/le-renew.log" >> /var/spool/cron/crontabs/root
