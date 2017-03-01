@@ -131,11 +131,9 @@ for i in ${DOMAIN_NAME[@]}; do
     cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/$i.conf
 
     sed -i "s/webmaster@localhost/$USER_EMAIL/g" /etc/apache2/sites-available/$i.conf
-    sed -i "s#/var/www/html#I${INSTALL_LOC[$COUNTER]}#g" /etc/apache2/sites-available/$i.conf
+    sed -i "s#/var/www/html#${INSTALL_LOC[$COUNTER]}#g" /etc/apache2/sites-available/$i.conf
     sed -i "/ServerAdmin/a         ServerName $i" /etc/apache2/sites-available/$i.conf
-    if [${DOMAIN_NAME_WWW[$COUNTER]} != ""]; then
-      sed -i "/ServerName/a ServerAlias www.$i" /etc/apache2/sites-available/$i.conf
-    fi
+    sed -i "/ServerName/a ServerAlias www.$i" /etc/apache2/sites-available/$i.conf
 
     a2ensite $i
     let COUNTER=COUNTER+1
