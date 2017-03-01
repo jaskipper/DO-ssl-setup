@@ -10,6 +10,7 @@ read -p "Name: " USER
 
 echo ""
 echo "Hello $USER. This Script will Help You Set Up SSL Encryption on your Digital Ocean Droplet. I need to ask you a few questions first before we get started."
+echo ""
 echo "Enter your E-Mail address and press [ENTER]: "
 read -p "E-Mail: " USER_EMAIL
 
@@ -45,6 +46,8 @@ function regdomain {
       DOMAINS_TO_ENCRYPT+=("-d www.${DOMAIN_NAME[$COUNTER]}")
       echo "Adding [www] too..."
     fi
+
+    source /root/config.conf
 
     if [ -z "$INSTALL_LOC" ]
     then
