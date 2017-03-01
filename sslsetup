@@ -8,10 +8,12 @@ echo "#####################################################"
 echo "Enter your name and press [ENTER]: "
 read -p "Name: " USER
 
+echo -n ""
 echo "Hello $USER. This Script will Help You Set Up SSL Encryption on your Digital Ocean Server. I need to ask you a few questions first before we get started."
 echo -n "Enter your E-Mail address and press [ENTER]: "
 read -p "E-Mail: " USER_EMAIL
 
+echo -n ""
 echo -n "We will now enter the first DOMAIN NAME that you want to encrypt."
 
 MOREDOMAINS="N"
@@ -19,6 +21,7 @@ DOMAINS_TO_ENCRYPT=()
 COUNTER=0
 
 function regdomain {
+  echo -n ""
   echo -n "Please use the base name (ex: example.com, crm.example.com) and do not include http:// or www..."
   echo -n "Enter your Domain or SubDomain Name and press [ENTER]: "
   read -p "Domain: " DOMAIN_NAME[$COUNTER]
@@ -26,53 +29,93 @@ function regdomain {
   #Just making sure that they didn't put www before the domain name.
   DOMAIN_NAME[$COUNTER]=$(sed 's/www.//g' <<<"${DOMAIN_NAME[$COUNTER]}")
 
+  echo -n ""
   echo -n "Let me check to make sure that ${DOMAIN_NAME[$COUNTER]} is valid and is working correctly."
 
   if [ping -c 1 ${DOMAIN_NAME[$COUNTER]} &> /dev/null]; then
     DOMAINS_TO_ENCRYPT+=("-d ${DOMAIN_NAME[$COUNTER]}")
 
+    echo -n ""
     echo "Great! I was able to Connect Successfuly to ${DOMAIN_NAME[$COUNTER]}!"
 
     if [ping -c 1 "www.${DOMAIN_NAME[$COUNTER]}" &> /dev/null]; then
       DOMAIN_NAME_WWW[$COUNTER]="www.${DOMAIN_NAME[$COUNTER]}"
       DOMAINS_TO_ENCRYPT+=("-d www.${DOMAIN_NAME[$COUNTER]}")
-      echo "Adding [www] too"
+      echo "Adding [www] too..."
     fi
 
+    echo -n ""
     echo -n "I need to know where ${DOMAIN_NAME[$COUNTER]} is installed on your server [The file path]."
     echo -n "The Default location is [/var/www/html]. Is this where ${DOMAIN_NAME[$COUNTER]} is installed?"
     echo -n "Please enter [Y] or [N] and press [ENTER]: "
 
-    while true; do
-        read -p "Is The Domain Installed at \"/var/www/html\"?: " INSTALL_IS_DEFAULT
-        case $yn in
-            [Yy]* ) INSTALL_LOC[$COUNTER]="/var/www/html"; break;;
-            [Nn]* ) echo -n "Please enter the exact install location (ex. /var/www/owncloud) and press [ENTER]: "
-            read INSTALL_LOC[$COUNTER]; break;;
-            * ) echo "Please answer yes or no.";;
-        esac
-    done
+    if ask "Is The Domain Installed at \"/var/www/html\"?: " Y; then
+      INSTALL_LOC[$COUNTER]="/var/www/html"
+    else
+      echo -n ""
+      echo -n "Please enter the exact install location (ex. /var/www/owncloud) and press [ENTER]: "
+      read INSTALL_LOC[$COUNTER]
+    fi
 
   else
+    echo -n ""
     echo "WARNING: COULD NOT CONNECT TO ${DOMAIN_NAME[$COUNTER]}. Please check your networking settings in DigitalOcean and then run this installer again. Thank you."
     break
   fi
 
+  echo -n ""
   echo -n "Do you have any other domains or subdomains that you would like to encrypt?"
   echo -n "Please enter [Y] or [N] and press [ENTER]: "
 
-  while true; do
-    read -p "Any other Domains or SubDomains?: " MOREDOMAINS
-    case $yn in
-      [Yy]* ) regdomain;
-      [Nn]* ) break;;
-    esac
-  done
-
   let COUNTER=COUNTER+1
+
+  echo -n ""
+  if ask "Do you want to Encrypt any other Domains or SubDomains?: "; then
+    regdomain
+  fi
+
 }
 
+ask() {
+    # http://djm.me/ask
+    local prompt default REPLY
+
+    while true; do
+
+        if [ "${2:-}" = "Y" ]; then
+            prompt="Y/n"
+            default=Y
+        elif [ "${2:-}" = "N" ]; then
+            prompt="y/N"
+            default=N
+        else
+            prompt="y/n"
+            default=
+        fi
+
+        # Ask the question (not using "read -p" as it uses stderr not stdout)
+        echo -n "$1 [$prompt] "
+
+        # Read the answer (use /dev/tty in case stdin is redirected from somewhere else)
+        read REPLY </dev/tty
+
+        # Default?
+        if [ -z "$REPLY" ]; then
+            REPLY=$default
+        fi
+
+        # Check if the reply is valid
+        case "$REPLY" in
+            Y*|y*) return 0 ;;
+            N*|n*) return 1 ;;
+        esac
+
+    done
+}
+
+echo -n ""
 echo -n "Great! We're done that part. Now I need to do a few things with the Apache Configuration file, and then we will be ready to contact LetsEncrypt."
+echo -n ""
 
 for i in {0..$COUNTER}; do
 
