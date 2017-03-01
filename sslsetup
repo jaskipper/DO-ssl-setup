@@ -70,6 +70,7 @@ function regdomain {
   let COUNTER=COUNTER+1
 
   echo -n ""
+
   if ask "Do you want to Encrypt any other Domains or SubDomains?: "; then
     regdomain
   fi
@@ -113,9 +114,11 @@ ask() {
     done
 }
 
-echo -n ""
-echo -n "Great! We're done that part. Now I need to do a few things with the Apache Configuration file, and then we will be ready to contact LetsEncrypt."
-echo -n ""
+regdomain
+
+echo ""
+echo "Great! We're done that part. Now I need to do a few things with the Apache Configuration file, and then we will be ready to contact LetsEncrypt."
+echo ""
 
 for i in {0..$COUNTER}; do
 
@@ -131,7 +134,7 @@ for i in {0..$COUNTER}; do
     fi
 
     a2ensite $DOMAIN_NAME
-  fi
+
 done
 
 #Reloading Apache before calling LetsEncrypt
