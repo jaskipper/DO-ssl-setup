@@ -4,56 +4,95 @@ echo "#####################################################"
 echo "#                    Setting up SSL                 #"
 echo "#####################################################"
 
-#Getting .env variables
-PWDIR=${PWD##*/}
-set -o allexport
-source ./config.conf
 
-apt --yes update
-echo -e "First let's install the LetsEncrypt Installer"
-apt --yes install python-letsencrypt-apache
+echo "Enter your name and press [ENTER]: "
+read -p "Name: " USER
 
-DNUM=(_1 _2 _3 _4 _5 _6)
+echo "Hello $USER. This Script will Help You Set Up SSL Encryption on your Digital Ocean Server. I need to ask you a few questions first before we get started."
+echo -n "Enter your E-Mail address and press [ENTER]: "
+read -p "E-Mail: " USER_EMAIL
 
+echo -n "We will now enter the first DOMAIN NAME that you want to encrypt."
+
+MOREDOMAINS="N"
 DOMAINS_TO_ENCRYPT=()
+COUNTER=0
 
-for i in $DNUM; do
-  THISDOMAIN = DOMAIN_NAME$i
-  if [$THISDOMAIN != "example.com"]; then
+function regdomain {
+  echo -n "Please use the base name (ex: example.com, crm.example.com) and do not include http:// or www..."
+  echo -n "Enter your Domain or SubDomain Name and press [ENTER]: "
+  read -p "Domain: " DOMAIN_NAME[$COUNTER]
 
-    #Just making sure that they didn't put www before the domain name.
-    THISDOMAIN=$(sed 's/www.//g' <<<"$THISDOMAIN")
+  #Just making sure that they didn't put www before the domain name.
+  DOMAIN_NAME[$COUNTER]=$(sed 's/www.//g' <<<"${DOMAIN_NAME[$COUNTER]}")
 
-    #Checking to see if the networking for this domain is set up correctly
-    echo "Checking $THISDOMAIN connection..."
+  echo -n "Let me check to make sure that ${DOMAIN_NAME[$COUNTER]} is valid and is working correctly."
 
-    if [ping -c 1 $THISDOMAIN &> /dev/null]; then
-      DOMAINS_TO_ENCRYPT+=("-d $THISDOMAIN")
-      echo "Connection Successful!"
-    else
-      echo "WARNING: COULD NOT CONNECT TO $THISDOMAIN"
+  if [ping -c 1 ${DOMAIN_NAME[$COUNTER]} &> /dev/null]; then
+    DOMAINS_TO_ENCRYPT+=("-d ${DOMAIN_NAME[$COUNTER]}")
+
+    echo "Great! I was able to Connect Successfuly to ${DOMAIN_NAME[$COUNTER]}!"
+
+    if [ping -c 1 "www.${DOMAIN_NAME[$COUNTER]}" &> /dev/null]; then
+      DOMAIN_NAME_WWW[$COUNTER]="www.${DOMAIN_NAME[$COUNTER]}"
+      DOMAINS_TO_ENCRYPT+=("-d www.${DOMAIN_NAME[$COUNTER]}")
+      echo "Adding [www] too"
     fi
 
-    if [ping -c 1 "www.$THISDOMAIN" &> /dev/null]; then
-      DOMAINS_TO_ENCRYPT+=("-d www.$THISDOMAIN")
-      echo "Adding \'www\' too"
+    echo -n "I need to know where ${DOMAIN_NAME[$COUNTER]} is installed on your server [The file path]."
+    echo -n "The Default location is [/var/www/html]. Is this where ${DOMAIN_NAME[$COUNTER]} is installed?"
+    echo -n "Please enter [Y] or [N] and press [ENTER]: "
+
+    while true; do
+        read -p "Is The Domain Installed at \"/var/www/html\"?: " INSTALL_IS_DEFAULT
+        case $yn in
+            [Yy]* ) INSTALL_LOC[$COUNTER]="/var/www/html"; break;;
+            [Nn]* ) echo -n "Please enter the exact install location (ex. /var/www/owncloud) and press [ENTER]: "
+            read INSTALL_LOC[$COUNTER]; break;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+
+  else
+    echo "WARNING: COULD NOT CONNECT TO ${DOMAIN_NAME[$COUNTER]}. Please check your networking settings in DigitalOcean and then run this installer again. Thank you."
+    break
+  fi
+
+  echo -n "Do you have any other domains or subdomains that you would like to encrypt?"
+  echo -n "Please enter [Y] or [N] and press [ENTER]: "
+
+  while true; do
+    read -p "Any other Domains or SubDomains?: " MOREDOMAINS
+    case $yn in
+      [Yy]* ) regdomain;
+      [Nn]* ) break;;
+    esac
+  done
+
+  let COUNTER=COUNTER+1
+}
+
+echo -n "Great! We're done that part. Now I need to do a few things with the Apache Configuration file, and then we will be ready to contact LetsEncrypt."
+
+for i in {0..$COUNTER}; do
+
+    echo "Working on the Apache Config File for ${DOMAIN_NAME[$i]}..."
+
+    cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
+
+    sed -i "s/webmaster@localhost/$USER_EMAIL/g" /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
+    sed -i "s#/var/www/html#$INSTALL_LOC$i#g" /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
+    sed -i "/ServerAdmin/a         ServerName ${DOMAIN_NAME[$i]}" /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
+    if [${DOMAIN_NAME_WWW[$COUNTER]} != ""]; then
+      sed -i "/ServerName/a ServerAlias www.${DOMAIN_NAME[$i]}" /etc/apache2/sites-available/${DOMAIN_NAME[$i]}.conf
     fi
-
-    echo "Working on the Apache Config File for $THISDOMAIN..."
-
-    cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/$THISDOMAIN.conf
-
-    sed -i "s/webmaster@localhost/$USER_EMAIL/g" /etc/apache2/sites-available/$THISDOMAIN.conf
-    sed -i "s#/var/www/html#$INSTALL_LOC$i#g" /etc/apache2/sites-available/$THISDOMAIN.conf
-    sed -i "/ServerAdmin/a         ServerName $THISDOMAIN" /etc/apache2/sites-available/$THISDOMAIN.conf
-    sed -i "/ServerName/a ServerAlias www.$THISDOMAIN" /etc/apache2/sites-available/$THISDOMAIN.conf
 
     a2ensite $DOMAIN_NAME
   fi
 done
 
 #Reloading Apache before calling LetsEncrypt
-echo "Reloading Apahce"
+echo "Reloading Apache"
 service apache2 reload
 
 echo "Connecting to LetsEncrypt..."
